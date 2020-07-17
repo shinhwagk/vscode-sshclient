@@ -2,9 +2,9 @@
 	"name": "vscode-sshclient",
 	"displayName": "vscode-sshclient",
 	"description": "a simple ssh client extension for vscode.",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"preview": true,
-	"icon": "",
+	"icon": "icon.png",
 	"author": {
 		"name": "shinhwagk",
 		"url": "https://github.com/shinhwagk"
