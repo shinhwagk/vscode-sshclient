@@ -1,0 +1,163 @@
+{
+	"name": "vscode-sshclient",
+	"displayName": "vscode-sshclient",
+	"description": "a simple ssh client extension for vscode.",
+	"version": "0.0.1",
+	"icon": "",
+	"author": {
+		"name": "shinhwagk",
+		"url": "https://github.com/shinhwagk"
+	},
+	"publisher": "shinhwagk",
+	"engines": {
+		"vscode": "^1.47.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/shinhwagk/vscode-sshclient"
+	},
+	"enableProposedApi": true,
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onView:vthostExplorer"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "vscode-sshclient-explorer",
+					"title": "vscode-sshclient",
+					"icon": "resources/sshclient-explorer.svg"
+				}
+			]
+		},
+		"views": {
+			"vscode-sshclient-explorer": [
+				{
+					"id": "vthostExplorer",
+					"name": "hosts"
+				},
+				{
+					"id": "vthostConnectExplorer",
+					"name": "connects",
+					"when": "vscode-sshclient.hostConnect-explorer"
+				},
+				{
+					"id": "vthostConnectLogExplorer",
+					"name": "logs",
+					"when": "vscode-sshclient.hostConnectLog-explorer"
+				},
+				{
+					"id": "vthostGroupExplorer",
+					"name": "groups",
+					"when": "vscode-sshclient.hostGroup-explorer"
+				},
+				{
+					"id": "vthostHostpadExplorer",
+					"name": "hostpads",
+					"when": "vscode-sshclient.hostHostPad-explorer"
+				},
+				{
+					"id": "vthostHelpExplorer",
+					"name": "Help"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "vthostExplorer",
+				"contents": "No node dependencies found [learn more](https://www.npmjs.com/).\n[Add Dependency](command:opensshremotes.openConfigFile)"
+			}
+		],
+		"configuration": [
+			{
+				"type": "object",
+				"title": "vscode-sshclient",
+				"properties": {
+					"vscode-sshclient.workspace": {
+						"type": "string",
+						"default": "~/vscode-sshclient",
+						"description": "Location of workspace for hostpads with logs."
+					},
+					"vscode-sshclient.SSH.configFile": {
+						"type": "string",
+						"description": "The absolute file path to a custom SSH config file."
+					}
+				}
+			}
+		],
+		"commands": [
+			{
+				"command": "vscode-sshclient.host.create-connect",
+				"title": "Create New Connect to Host",
+				"icon": {
+					"light": "resources/light/empty-window.svg",
+					"dark": "resources/dark/empty-window.svg",
+					"highContrast": "resources/highContrast/empty-window.svg"
+				}
+			},
+			{
+				"command": "workbench.action.terminal.runSelectedText",
+				"title": "runSelectedText to current terminal"
+			},
+			{
+				"command": "vscode-sshclient.connect.create-hostpad",
+				"title": "Create Hostpad for Host"
+			}
+		],
+		"menus": {
+			"view/item/context": [
+				{
+					"command": "vscode-sshclient.host.create-connect",
+					"group": "inline@1",
+					"when": "view == vthostExplorer && viewItem == vthost"
+				},
+				{
+					"command": "vscode-sshclient.host.create-connect",
+					"group": "navigation@1",
+					"when": "view == vthostExplorer && viewItem == vthost"
+				},
+				{
+					"command": "vscode-sshclient.connect.create-hostpad",
+					"group": "group2",
+					"when": "viewItem == vthost"
+				}
+			],
+			"editor/context": [
+				{
+					"group": "vscode-sshclient",
+					"command": "workbench.action.terminal.runSelectedText"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint src --ext ts",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/fs-extra": "^9.0.1",
+		"@types/glob": "^7.1.1",
+		"@types/mocha": "^7.0.2",
+		"@types/node": "^13.11.0",
+		"@types/vscode": "^1.47.0",
+		"@typescript-eslint/eslint-plugin": "^2.30.0",
+		"@typescript-eslint/parser": "^2.30.0",
+		"eslint": "^6.8.0",
+		"glob": "^7.1.6",
+		"mocha": "^7.1.2",
+		"typescript": "^3.8.3",
+		"vscode-test": "^1.3.0"
+	},
+	"dependencies": {
+		"fs-extra": "^9.0.1",
+		"ssh-config": "^4.0.2"
+	}
+}
