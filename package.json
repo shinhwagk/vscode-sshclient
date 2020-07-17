@@ -2,7 +2,7 @@
 	"name": "vscode-sshclient",
 	"displayName": "vscode-sshclient",
 	"description": "a simple ssh client extension for vscode.",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"preview": true,
 	"icon": "icon.png",
 	"author": {
@@ -106,6 +106,10 @@
 			{
 				"command": "vscode-sshclient.connect.create-hostpad",
 				"title": "Create Hostpad for Host"
+			},
+			{
+				"command": "vscode-sshclient.configure.sshconfig",
+				"title": "Configure ssh-config"
 			}
 		],
 		"menus": {
@@ -130,6 +134,13 @@
 				{
 					"group": "vscode-sshclient",
 					"command": "workbench.action.terminal.runSelectedText"
+				}
+			],
+			"view/title": [
+				{
+					"command": "vscode-sshclient.configure.sshconfig",
+					"group": "navigation",
+					"when": "view == vthostExplorer"
 				}
 			]
 		}

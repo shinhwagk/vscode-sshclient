@@ -6,15 +6,15 @@ import { writeFileSync, existsSync, readFileSync } from 'fs';
 import * as vscode from 'vscode';
 import { TreeItem, TreeDataProvider, Uri, EventEmitter, Event } from 'vscode';
 
-import { readdirSync, statSync, mkdirpSync } from 'fs-extra';
+import { readdirSync, statSync, mkdirpSync, ensureFileSync } from 'fs-extra';
 
 const SSHConfig = require('ssh-config')
 
 import { createTerminal } from './terminal';
-import * as helper from './helper'
+import * as helper from './helper';
 
-import { vsPrint } from './dev'
-import { VTTerminalManager } from './terminal'
+import { vsPrint } from './dev';
+import { VTTerminalManager } from './terminal';
 
 function readSSHConfig(sshConfigPath?: string) {
 	const sshconfigfile = helper.join(sshConfigPath || homedir(), '.ssh', 'config')
@@ -23,6 +23,17 @@ function readSSHConfig(sshConfigPath?: string) {
 
 export function getConfigure<T>(name: string, defaultValue: T): T {
 	return vscode.workspace.getConfiguration('vscode-sshclient').get(name) || defaultValue;
+}
+async function configureSshConfig() {
+	// @ext:ms-vscode-remote.remote-ssh,ms-vscode-remote.remote-ssh-edit config file
+	const defutlSSHConfig = helper.join(homedir(), '.ssh', 'config')
+	const pick = await vscode.window.showQuickPick([defutlSSHConfig, 'Settings'])
+	if (!pick) return;
+	const sshconfig = getConfigure('SSH.configFile', pick)
+	ensureFileSync(sshconfig)
+	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(sshconfig));
+	await vscode.languages.setTextDocumentLanguage(doc, 'ssh_config');
+	await vscode.window.showTextDocument(doc);
 }
 
 function initializeExtensionDirectory() {
@@ -65,6 +76,10 @@ export function initializeExtensionVariables(ctx: vscode.ExtensionContext): void
 			}
 		})
 	);
+
+	ext.registerCommand('vscode-sshclient.configure.sshconfig', async () => {
+		await configureSshConfig()
+	})
 }
 
 function initializeHostConnectBarItem() {
@@ -285,6 +300,8 @@ class VTHostHostpadManager {
 		return readdirSync(hostHostPadPath).length
 	}
 }
+
+
 // global variables
 namespace ext {
 	export let context: vscode.ExtensionContext;
