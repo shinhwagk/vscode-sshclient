@@ -21,23 +21,24 @@ function readSSHConfig(sshConfigPath?: string) {
 	return readFileSync(sshconfigfile, { encoding: 'utf-8' })
 }
 
-export function getConfigure<T>(name: string, defaultValue: T): T {
+export function getConfigure<T>(name: string, defaultValue?: T): T | undefined {
 	return vscode.workspace.getConfiguration('vscode-sshclient').get(name) || defaultValue;
 }
+
 async function configureSshConfig() {
 	// @ext:ms-vscode-remote.remote-ssh,ms-vscode-remote.remote-ssh-edit config file
 	const defutlSSHConfig = helper.join(homedir(), '.ssh', 'config')
 	const pick = await vscode.window.showQuickPick([defutlSSHConfig, 'Settings'])
 	if (!pick) return;
-	const sshconfig = getConfigure('SSH.configFile', pick)
-	ensureFileSync(sshconfig)
-	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(sshconfig));
+	mkdirpSync(helper.join(homedir(), '.ssh'))
+	ensureFileSync(defutlSSHConfig)
+	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(defutlSSHConfig));
 	await vscode.languages.setTextDocumentLanguage(doc, 'ssh_config');
 	await vscode.window.showTextDocument(doc);
 }
 
 function initializeExtensionDirectory() {
-	const p = getConfigure('hostpads.directory', path.join(homedir(), 'vscode-sshclient'));
+	const p = getConfigure('hostpads.directory', path.join(homedir(), 'vscode-sshclient'))!;
 	const dpath = p.startsWith('~/') ? join(homedir(), p.substr(2)) : p;
 	ext.vtHosthostpadDirectory = dpath
 	mkdirpSync(dpath)
@@ -45,10 +46,22 @@ function initializeExtensionDirectory() {
 	mkdirpSync(helper.join(dpath, 'groups'))
 }
 
+function initializeSshConcfig() {
+	const scf = getConfigure<string>('SSH.configFile')
+	if (scf) {
+		if (existsSync(scf)) {
+			ext.sshConfig = SSHConfig.parse(readSSHConfig())
+		}
+	} else {
+		if (existsSync(helper.join(homedir(), '.ssh', 'config'))) {
+			ext.sshConfig = SSHConfig.parse(helper.join(homedir(), '.ssh', 'config'))
+		}
+	}
+}
+
 export function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
 	ext.context = ctx
 	initializeExtensionDirectory()
-	vsPrint(vscode.workspace.getConfiguration('ms-vscode-remote.remote-ssh-edit').get('name') || '')
 	ext.vthostView = vscode.window.createTreeView('vthostExplorer', { treeDataProvider: ext.vtHostProvider, canSelectMany: true })
 	ext.vthostConnectView = vscode.window.createTreeView('vthostConnectExplorer', { treeDataProvider: ext.vtHostConnectProvider, canSelectMany: true })
 	ext.vthostHostpadView = vscode.window.createTreeView('vthostHostpadExplorer', { treeDataProvider: ext.vtHostHostpadProvider, canSelectMany: true })
@@ -57,7 +70,7 @@ export function initializeExtensionVariables(ctx: vscode.ExtensionContext): void
 	ext.context.subscriptions.push(ext.vthostView)
 	ext.context.subscriptions.push(ext.vthostConnectView)
 	ext.context.subscriptions.push(ext.vthostHostpadView)
-	ext.sshConfig = SSHConfig.parse(readSSHConfig())
+	initializeSshConcfig()
 
 	ext.context.subscriptions.push(vscode.window.onDidCloseTerminal(async (terminal: vscode.Terminal) => {
 		if (/^VT@/.test(terminal.name)) {
