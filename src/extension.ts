@@ -136,7 +136,6 @@ export function activate(context: vscode.ExtensionContext) {
 		// t.sendText(`ssh ${host.label}`, true);
 
 		// await sleep(1000)
-		// t.sendText(`Sinapay2019!`, true)
 		await vscode.commands.executeCommand('vscode-sshclient.host.refresh', vthost.label)
 	})
 	ext.registerCommand('vscode-sshclient.connect.create-hostpad', async () => {
