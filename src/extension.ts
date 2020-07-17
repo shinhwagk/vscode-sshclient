@@ -205,7 +205,7 @@ export class VTHost extends vscode.TreeItem {
 			dark: path.join(__filename, '..', '..', 'resources', 'dark', 'vm-active.svg')
 		}
 	contextValue = 'vthost';
-	description = ext.sshConfig[1].config[0].value
+	description = 'ip'//ext.sshConfig[1].config[0].value
 }
 
 export class VTHostConnect extends vscode.TreeItem {
