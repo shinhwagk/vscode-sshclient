@@ -34,7 +34,13 @@ async function configureSshConfig() {
 	ensureFileSync(defutlSSHConfig)
 	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(defutlSSHConfig));
 	await vscode.languages.setTextDocumentLanguage(doc, 'ssh_config');
-	await vscode.window.showTextDocument(doc);
+	const x = await vscode.window.showTextDocument(doc);
+	ext.context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((doc) => {
+		if (doc.uri.fsPath == defutlSSHConfig) {
+			initializeSshConcfig()
+			ext.vtHostProvider.refresh()
+		}
+	}))
 }
 
 function initializeExtensionDirectory() {
