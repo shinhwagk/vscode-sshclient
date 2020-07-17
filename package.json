@@ -69,7 +69,7 @@
 		"viewsWelcome": [
 			{
 				"view": "vthostExplorer",
-				"contents": "No node dependencies found [learn more](https://www.npmjs.com/).\n[Add Dependency](command:opensshremotes.openConfigFile)"
+				"contents": "No node dependencies found [learn more](https://www.npmjs.com/).\n[Add Dependency](command:vscode-sshclient.configure.sshconfig)"
 			}
 		],
 		"configuration": [
