@@ -338,7 +338,7 @@ export class VTHosthostpadProvider implements TreeDataProvider<VTHostHostpad> {
 			const item = new TreeItem(uri, 0);
 			item.command = {
 				command: 'vscode.open',
-				arguments: [uri, vscode.ViewColumn.Two],
+				arguments: [uri],
 				title: basename(uri.path)
 			};
 			item.contextValue = 'vthostpad';
