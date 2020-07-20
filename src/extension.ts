@@ -10,11 +10,11 @@ import { readdirSync, statSync, mkdirpSync, ensureFileSync } from 'fs-extra';
 
 const SSHConfig = require('ssh-config');
 
-import { createTerminal } from './terminal';
 import * as helper from './helper';
 
-import { vsPrint } from './dev';
 import { VTTerminalManager } from './terminal';
+import { vsPrint } from './dev';
+
 
 function readSSHConfig(sshConfigPath?: string) {
 	const sshconfigfile = helper.join(sshConfigPath || homedir(), '.ssh', 'config');
@@ -29,7 +29,7 @@ async function configureSshConfig() {
 	// @ext:ms-vscode-remote.remote-ssh,ms-vscode-remote.remote-ssh-edit config file
 	const defutlSSHConfig = helper.join(homedir(), '.ssh', 'config');
 	const pick = await vscode.window.showQuickPick([defutlSSHConfig, 'Settings']);
-	if (!pick) return;
+	if (!pick) { return; }
 	mkdirpSync(helper.join(homedir(), '.ssh'));
 	ensureFileSync(defutlSSHConfig);
 	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(defutlSSHConfig));
@@ -108,7 +108,7 @@ function initializeHostConnectBarItem() {
 	hostConnectBarItem.hide();
 
 	ext.context.subscriptions.push(vscode.window.onDidChangeActiveTerminal((terminal) => {
-		if (terminal && /^VT@/.test(terminal.name)) {
+		if (terminal && ext.vtTerminalMgr.checkHostTerminalExistByNamePrefix(terminal.name)) {
 			// https://code.visualstudio.com/api/references/icons-in-labels
 			// breadcrumb-separator, repl, remote-explorer, vm-active
 			hostConnectBarItem.text = `$(vm-active) ssh-client: ${terminal.name}`;
@@ -153,6 +153,8 @@ export function activate(context: vscode.ExtensionContext) {
 			ext.vtHostConnectProvider.refresh();
 		}
 
+		// vscode.window.showInformationMessage(ts.length.toString())
+
 		const hostpadNumber = ext.vgHostHostpadMgr.queryHostpadNumberByHost(ext.vtTerminalMgr.currentHost);
 		if (hostpadNumber === 0) {
 			ext.setContext('vscode-sshclient.hostHostPad-explorer', false);
@@ -163,8 +165,9 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	ext.registerCommand('vscode-sshclient.host.create-connect', async (vthost: VTHost) => {
-		const t = await createTerminal(vthost.label);
+		const t = await ext.vtTerminalMgr.createTerminal(vthost.label);
 		ext.context.subscriptions.push(t);
+
 		// const t = vscode.window.createTerminal(`VT@${host.label}@${Math.ceil(Math.random() * 100)}`);
 
 		// t.show()
@@ -175,7 +178,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	ext.registerCommand('vscode-sshclient.connect.create-hostpad', async () => {
 		const name: string | undefined = await vscode.window.showInputBox();
-		if (!name) return;
+		if (!name) { return; }
 		const hostdir = helper.join(ext.vtHosthostpadDirectory, 'hosts', ext.vtTerminalMgr.currentHost);
 		mkdirpSync(hostdir);
 		writeFileSync(`${hostdir}/VT@${name}`, '');
@@ -184,6 +187,21 @@ export function activate(context: vscode.ExtensionContext) {
 	ext.registerCommand('vscode-sshclient.hostpad.refresh', () => {
 		ext.vtHostHostpadProvider.refresh();
 	});
+
+	ext.registerCommand('vscode-sshclient.host.close-connect', async (vthost: VTHost) => {
+		const terminal = ext.vtTerminalMgr.getTerminalByhost(vthost.label);
+		if (terminal) {
+			terminal.dispose();
+		}
+		// ext.context.subscriptions
+	});
+
+	ext.registerCommand('vscode-sshclient.connect.rename', () => {
+		vscode.commands.executeCommand('workbench.action.terminal.renameWithArg', { name: 'sss' })
+	})
+	ext.registerCommand('vscode-sshclient.host.refresh', () => {
+		initializeSshConcfig()
+	})
 }
 
 export function deactivate() { }
@@ -205,7 +223,20 @@ export class VTHostProvider implements vscode.TreeDataProvider<VTHost> {
 
 	getChildren(element?: VTHost): Thenable<VTHost[]> {
 		if (ext.sshConfig) {
-			return Promise.resolve(ext.sshConfig.filter((c: any) => c.param === 'Host').map((c: any) => new VTHost(c.value, 0)));
+			const hosts = ext.sshConfig.filter((c: any) => c.param === 'Host');
+			const elms = [];
+			for (const host of hosts) {
+				if (ext.vtTerminalMgr.checkHostConnectNumber(host.value).length === 1) {
+					elms.push(new VTHost(host.value, 'vthost-connect'));
+					continue;
+				}
+				// if (ext.vtTerminalMgr.checkHostConnectNumber(host.value).length >= 2) {
+				elms.push(new VTHost(host.value, 'vthost'));
+				// }
+
+			}
+			return Promise.resolve(elms);
+			// return Promise.resolve(ext.sshConfig.filter((c: any) => c.param === 'Host').map((c: any) => new VTHost(c.value, 'vthost'));
 		}
 		return Promise.resolve([]);
 	}
@@ -214,8 +245,7 @@ export class VTHostProvider implements vscode.TreeDataProvider<VTHost> {
 export class VTHost extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
-		public readonly collapsibleState: vscode.TreeItemCollapsibleState = 0,
-		public readonly host?: string
+		public readonly contextValue: "vthost" | "vthost-connect"
 	) { super(label, 0); }
 
 	command = { command: "vscode-sshclient.host.refresh", title: "111", arguments: [this.label] };
@@ -226,19 +256,20 @@ export class VTHost extends vscode.TreeItem {
 			light: path.join(__filename, '..', '..', 'resources', 'light', 'vm-active.svg'),
 			dark: path.join(__filename, '..', '..', 'resources', 'dark', 'vm-active.svg')
 		};
-	contextValue = 'vthost';
 	description = 'ip';//ext.sshConfig[1].config[0].value
 }
 
 export class VTHostConnect extends vscode.TreeItem {
 	constructor(
-		public readonly label: string
+		public readonly label: string,
+		public readonly terminalName: string,
+		public readonly host: string,
 		// private version: string,
 		// public readonly command?: vscode.Command
 	) {
 		super(label, 0);
 	}
-	command = { command: "vscode-sshclient.connect.refresh", title: "111", arguments: [this.label] };
+	command = { command: "vscode-sshclient.connect.refresh", title: "111", arguments: [this.terminalName] };
 	contextValue = 'vtconnect';
 }
 
@@ -256,7 +287,11 @@ class VTHostConnectProvider implements vscode.TreeDataProvider<VTHostConnect> {
 
 	getChildren(element?: VTHostConnect): Thenable<VTHostConnect[]> {
 		const ts = ext.vtTerminalMgr.query();
-		return Promise.all(ts.map(t => new VTHostConnect(t.name)));
+
+		return Promise.all(ts.map(t => {
+			const { host, seq } = ext.vtTerminalMgr.parserTerminalName(t.name)
+			return new VTHostConnect(t.name.split('@').pop()!, t.name, host)
+		}));
 	}
 }
 

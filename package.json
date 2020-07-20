@@ -20,6 +20,7 @@
 	"categories": [
 		"Other"
 	],
+	"license": "MIT",
 	"activationEvents": [
 		"onView:vthostExplorer"
 	],
@@ -42,7 +43,7 @@
 				},
 				{
 					"id": "vthostConnectExplorer",
-					"name": "connects",
+					"name": "host connects",
 					"when": "vscode-sshclient.hostConnect-explorer"
 				},
 				{
@@ -92,7 +93,7 @@
 		"commands": [
 			{
 				"command": "vscode-sshclient.host.create-connect",
-				"title": "Create New Connect to Host",
+				"title": "Create Connect",
 				"icon": {
 					"light": "resources/light/empty-window.svg",
 					"dark": "resources/dark/empty-window.svg",
@@ -105,11 +106,28 @@
 			},
 			{
 				"command": "vscode-sshclient.connect.create-hostpad",
-				"title": "Create Hostpad for Host"
+				"title": "Create Hostpad"
 			},
 			{
 				"command": "vscode-sshclient.configure.sshconfig",
-				"title": "Configure ssh-config"
+				"title": "Configure ssh-config",
+				"icon": {
+					"light": "resources/light/configure.svg",
+					"dark": "resources/dark/configure.svg",
+					"highContrast": "resources/highContrast/configure.svg"
+				}
+			},
+			{
+				"command": "vscode-sshclient.host.close-connect",
+				"title": "Close Connect"
+			},
+			{
+				"command": "vscode-sshclient.host.refresh",
+				"title": "Refresh",
+				"icon": {
+					"light": "resources/light/refresh.svg",
+					"dark": "resources/dark/refresh.svg"
+				}
 			}
 		],
 		"menus": {
@@ -117,17 +135,27 @@
 				{
 					"command": "vscode-sshclient.host.create-connect",
 					"group": "inline@1",
-					"when": "view == vthostExplorer && viewItem == vthost"
+					"when": "view == vthostExplorer && viewItem =~ /^vthost/i"
 				},
 				{
 					"command": "vscode-sshclient.host.create-connect",
 					"group": "navigation@1",
-					"when": "view == vthostExplorer && viewItem == vthost"
+					"when": "view == vthostExplorer && viewItem =~ /^vthost/i"
+				},
+				{
+					"command": "vscode-sshclient.host.close-connect",
+					"group": "inline@1",
+					"when": "view == vthostExplorer && viewItem =~ /^vthost-connect$/i"
 				},
 				{
 					"command": "vscode-sshclient.connect.create-hostpad",
 					"group": "group2",
-					"when": "viewItem == vthost"
+					"when": "viewItem =~ /^vthost/i"
+				},
+				{
+					"command": "vscode-sshclient.host.close-connect",
+					"group": "group3",
+					"when": "view == vthostExplorer && viewItem =~ /^vthost-connect$/i"
 				}
 			],
 			"editor/context": [
@@ -139,6 +167,11 @@
 			"view/title": [
 				{
 					"command": "vscode-sshclient.configure.sshconfig",
+					"group": "navigation",
+					"when": "view == vthostExplorer"
+				},
+				{
+					"command": "vscode-sshclient.host.refresh",
 					"group": "navigation",
 					"when": "view == vthostExplorer"
 				}
