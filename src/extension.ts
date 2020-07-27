@@ -100,6 +100,14 @@ export function initializeExtensionVariables(ctx: vscode.ExtensionContext): void
 	ext.registerCommand('vscode-sshclient.configure.sshconfig', async () => {
 		await configureSshConfig();
 	});
+
+	ext.registerCommand('vscode-sshclient.hostpad.sendTerminal', (hp: VTHostHostpad) => {
+		const at = vscode.window.activeTerminal
+		const fUrl = hp.resourceUri
+		if (fUrl && at) {
+			at.sendText(readFileSync(fUrl.fsPath, { encoding: 'utf-8' }))
+		}
+	});
 }
 
 function initializeHostConnectBarItem() {
@@ -181,7 +189,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!name) { return; }
 		const hostdir = helper.join(ext.vtHosthostpadDirectory, 'hosts', ext.vtTerminalMgr.currentHost);
 		mkdirpSync(hostdir);
-		writeFileSync(`${hostdir}/VT@${name}`, '');
+		writeFileSync(`${hostdir}/${name}`, '');
 		ext.vtHostHostpadProvider.refresh();
 	});
 	ext.registerCommand('vscode-sshclient.hostpad.refresh', () => {
@@ -197,11 +205,11 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	ext.registerCommand('vscode-sshclient.connect.rename', () => {
-		vscode.commands.executeCommand('workbench.action.terminal.renameWithArg', { name: 'sss' })
-	})
-	ext.registerCommand('vscode-sshclient.host.refresh', () => {
-		initializeSshConcfig()
-	})
+		vscode.commands.executeCommand('workbench.action.terminal.renameWithArg', { name: 'sss' });
+	});
+	// ext.registerCommand('vscode-sshclient.host.refresh', () => {
+	// 	initializeSshConcfig();
+	// });
 }
 
 export function deactivate() { }
@@ -289,8 +297,8 @@ class VTHostConnectProvider implements vscode.TreeDataProvider<VTHostConnect> {
 		const ts = ext.vtTerminalMgr.query();
 
 		return Promise.all(ts.map(t => {
-			const { host, seq } = ext.vtTerminalMgr.parserTerminalName(t.name)
-			return new VTHostConnect(t.name.split('@').pop()!, t.name, host)
+			const { host, seq } = ext.vtTerminalMgr.parserTerminalName(t.name);
+			return new VTHostConnect(t.name.split('@').pop()!, t.name, host);
 		}));
 	}
 }

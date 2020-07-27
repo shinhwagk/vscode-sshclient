@@ -28,7 +28,7 @@ export class VTTerminalManager {
 
     createTerminal(host: string, kind?: 'host' | 'group') {
         const terminalName = this.obtainTerminalName('host', host);
-        const seq = Math.ceil(Math.random() * 100)
+        const seq = Math.ceil(Math.random() * 100);
         const t = vscode.window.createTerminal(terminalName + ` | ${seq}`);
         t.sendText(`ssh ${host}`);
         t.show();
@@ -42,9 +42,9 @@ export class VTTerminalManager {
     }
 
     getHostTerminal(host: string): vscode.Terminal | undefined {
-        const terminal = vscode.window.terminals.filter(t => this.prefixHostRegex.test(this.obtainTerminalName('host', host)))
+        const terminal = vscode.window.terminals.filter(t => this.prefixHostRegex.test(this.obtainTerminalName('host', host)));
         if (terminal.length >= 1) {
-            return terminal[0]
+            return terminal[0];
         }
         return undefined;
     }
@@ -70,13 +70,13 @@ export class VTTerminalManager {
     }
 
     checkHostTerminalExistByNamePrefix(tname: string): boolean {
-        return this.prefixHostRegex.test(tname)
+        return this.prefixHostRegex.test(tname);
     }
 
     parserTerminalName(name: string): { host: string, seq: string } {
-        const rs = this.hostTerminalNameRegex.exec(name)!
+        const rs = this.hostTerminalNameRegex.exec(name)!;
         // if (rs) {
-        return { host: rs[1], seq: rs[2] }
+        return { host: rs[1], seq: rs[2] };
         // }
         // return undefined
     }
