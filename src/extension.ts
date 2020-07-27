@@ -12,6 +12,7 @@ const SSHConfig = require('ssh-config');
 import * as helper from './helper';
 import { VTTerminalManager } from './terminal';
 import { vsPrint } from './dev';
+import { ETXTBSY } from 'constants';
 
 
 function readSSHConfig(sshConfigPath?: string) {
@@ -82,11 +83,13 @@ function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
 	ext.context.subscriptions.push(ext.vthostHostpadView);
 	initializeSshConcfig();
 
-	ext.context.subscriptions.push(vscode.window.onDidCloseTerminal(async (terminal: vscode.Terminal) => {
-		if (/^VT@/.test(terminal.name)) {
-			await vscode.commands.executeCommand('vscode-sshclient.host.refresh');
-		}
-	}));
+	ext.context.subscriptions.push(
+		vscode.window.onDidCloseTerminal(async (terminal: vscode.Terminal) => {
+			if (ext.vtTerminalMgr.prefixRegex.test(terminal.name)) {
+				await vscode.commands.executeCommand('vscode-sshclient.host.refresh');
+			}
+		})
+	);
 
 	ext.context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration(async (e: vscode.ConfigurationChangeEvent) => {
@@ -206,7 +209,6 @@ export function activate(context: vscode.ExtensionContext) {
 		if (terminal) {
 			terminal.dispose();
 		}
-		// ext.context.subscriptions
 	});
 
 	ext.registerCommand('vscode-sshclient.connect.rename', () => {
