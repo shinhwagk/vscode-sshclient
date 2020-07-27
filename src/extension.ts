@@ -1,42 +1,43 @@
 import * as path from 'path';
 import { homedir } from 'os';
 import { join, basename } from 'path';
-import { writeFileSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync, fstat } from 'fs';
 
 import * as vscode from 'vscode';
 import { TreeItem, TreeDataProvider, Uri, EventEmitter, Event } from 'vscode';
 
 import { readdirSync, statSync, mkdirpSync, ensureFileSync } from 'fs-extra';
-
 const SSHConfig = require('ssh-config');
 
 import * as helper from './helper';
-
 import { VTTerminalManager } from './terminal';
 import { vsPrint } from './dev';
 
 
 function readSSHConfig(sshConfigPath?: string) {
-	const sshconfigfile = helper.join(sshConfigPath || homedir(), '.ssh', 'config');
+	const sshconfigfile = helper.join(sshConfigPath || path.join(homedir(), '.ssh', 'config'));
 	return readFileSync(sshconfigfile, { encoding: 'utf-8' });
 }
 
-export function getConfigure<T>(name: string, defaultValue?: T): T | undefined {
-	return vscode.workspace.getConfiguration('vscode-sshclient').get(name) || defaultValue;
-}
+// function getConfigure<T>(name: string, defaultValue?: T): T | undefined {
+// 	return vscode.workspace.getConfiguration('vscode-sshclient').get(name) || defaultValue;
+// }
 
 async function configureSshConfig() {
+	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.configFile')
+	const cf = sshConfigFile || helper.join(homedir(), '.ssh', 'config');
 	// @ext:ms-vscode-remote.remote-ssh,ms-vscode-remote.remote-ssh-edit config file
-	const defutlSSHConfig = helper.join(homedir(), '.ssh', 'config');
-	const pick = await vscode.window.showQuickPick([defutlSSHConfig, 'Settings']);
-	if (!pick) { return; }
-	mkdirpSync(helper.join(homedir(), '.ssh'));
-	ensureFileSync(defutlSSHConfig);
-	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(defutlSSHConfig));
+	// const pick = await vscode.window.showQuickPick([defutlSSHConfig, 'Settings']);
+	// if (!pick) { return; }
+
+	mkdirpSync(path.dirname(cf));
+	ensureFileSync(cf);
+	const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(cf));
 	await vscode.languages.setTextDocumentLanguage(doc, 'ssh_config');
 	const x = await vscode.window.showTextDocument(doc);
+	// x.
 	ext.context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((doc) => {
-		if (doc.uri.fsPath === defutlSSHConfig) {
+		if (doc.uri.fsPath === cf) {
 			initializeSshConcfig();
 			ext.vtHostProvider.refresh();
 		}
@@ -44,8 +45,9 @@ async function configureSshConfig() {
 }
 
 function initializeExtensionDirectory() {
-	const p = getConfigure('hostpads.directory', path.join(homedir(), 'vscode-sshclient'))!;
-	const dpath = p.startsWith('~/') ? join(homedir(), p.substr(2)) : p;
+	const hdc = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('workspace')
+	const hd = hdc || path.join(homedir(), 'vscode-sshclient')
+	const dpath = hd.startsWith('~/') ? join(homedir(), hd.substr(2)) : hd;
 	ext.vtHosthostpadDirectory = dpath;
 	mkdirpSync(dpath);
 	mkdirpSync(helper.join(dpath, 'hosts'));
@@ -53,20 +55,21 @@ function initializeExtensionDirectory() {
 }
 
 function initializeSshConcfig() {
-	const scf = getConfigure<string>('SSH.configFile');
-	if (scf) {
-		if (existsSync(scf)) {
-			ext.sshConfig = SSHConfig.parse(readSSHConfig());
+	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.configFile')
+	if (sshConfigFile) {
+		if (existsSync(sshConfigFile)) {
+			ext.sshConfig = SSHConfig.parse(readSSHConfig(sshConfigFile));
 		}
 	} else {
-		if (existsSync(helper.join(homedir(), '.ssh', 'config'))) {
-			vscode.window.showInformationMessage(readFileSync(helper.join(homedir(), '.ssh', 'config'), { encoding: 'utf-8' }));
-			ext.sshConfig = SSHConfig.parse(readFileSync(helper.join(homedir(), '.ssh', 'config'), { encoding: 'utf-8' }));
-		}
+		ext.sshConfig = SSHConfig.parse(readSSHConfig());
+		// if (existsSync(helper.join(homedir(), '.ssh', 'config'))) {
+		// 	vscode.window.showInformationMessage(readFileSync(helper.join(homedir(), '.ssh', 'config'), { encoding: 'utf-8' }));
+		// 	ext.sshConfig = SSHConfig.parse(readFileSync(helper.join(homedir(), '.ssh', 'config'), { encoding: 'utf-8' }));
+		// }
 	}
 }
 
-export function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
+function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
 	ext.context = ctx;
 	initializeExtensionDirectory();
 	ext.vthostView = vscode.window.createTreeView('vthostExplorer', { treeDataProvider: ext.vtHostProvider, canSelectMany: true });
@@ -92,7 +95,9 @@ export function initializeExtensionVariables(ctx: vscode.ExtensionContext): void
 				ext.vtHostHostpadProvider.refresh();
 			}
 			if (e.affectsConfiguration('sshConfig')) {
-				ext.sshConfig = SSHConfig.parse(readSSHConfig());
+				const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.configFile')
+				ext.sshConfig = SSHConfig.parse(readSSHConfig(sshConfigFile));
+				await vscode.commands.executeCommand('vscode-sshclient.host.refresh');
 			}
 		})
 	);
@@ -214,7 +219,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() { }
 
-export class VTHostProvider implements vscode.TreeDataProvider<VTHost> {
+class VTHostProvider implements vscode.TreeDataProvider<VTHost> {
 
 	private _onDidChangeTreeData: vscode.EventEmitter<VTHost | undefined | void> = new vscode.EventEmitter<VTHost | undefined | void>();
 	readonly onDidChangeTreeData: vscode.Event<VTHost | undefined | void> = this._onDidChangeTreeData.event;
@@ -250,7 +255,7 @@ export class VTHostProvider implements vscode.TreeDataProvider<VTHost> {
 	}
 }
 
-export class VTHost extends vscode.TreeItem {
+class VTHost extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
 		public readonly contextValue: "vthost" | "vthost-connect"
@@ -267,7 +272,7 @@ export class VTHost extends vscode.TreeItem {
 	description = 'ip';//ext.sshConfig[1].config[0].value
 }
 
-export class VTHostConnect extends vscode.TreeItem {
+class VTHostConnect extends vscode.TreeItem {
 	constructor(
 		public readonly label: string,
 		public readonly terminalName: string,
@@ -326,7 +331,7 @@ class VTHostConnectProvider implements vscode.TreeDataProvider<VTHostConnect> {
 
 
 type VTHostHostpad = TreeItem;
-export class VTHosthostpadProvider implements TreeDataProvider<VTHostHostpad> {
+class VTHosthostpadProvider implements TreeDataProvider<VTHostHostpad> {
 	private _onDidChangeTreeData: EventEmitter<VTHostHostpad | void> = new EventEmitter<VTHostHostpad | void>();
 	public readonly onDidChangeTreeData: Event<VTHostHostpad | void> = this._onDidChangeTreeData.event;
 
@@ -339,7 +344,7 @@ export class VTHosthostpadProvider implements TreeDataProvider<VTHostHostpad> {
 	}
 
 	async getChildren(element?: VTHostHostpad): Promise<VTHostHostpad[]> {
-		const fPath: string = `${homedir()}/vscode-sshclient/hosts/${ext.vtTerminalMgr.currentHost}`;
+		const fPath: string = `${ext.vtHosthostpadDirectory}/hosts/${ext.vtTerminalMgr.currentHost}`;
 		if (!existsSync(fPath)) { return Promise.resolve([]); };
 		return readdirSync(fPath).filter(f => statSync(path.join(fPath, f)).isFile()).map(f => {
 			const uri = Uri.file(join(fPath, f));
@@ -386,6 +391,7 @@ namespace ext {
 	export let vthostConnectView: vscode.TreeView<VTHostConnect>;
 	export let vthostHostpadView: vscode.TreeView<VTHostHostpad>;
 }
+
 
 
 
