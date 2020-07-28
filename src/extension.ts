@@ -11,8 +11,6 @@ const SSHConfig = require('ssh-config');
 
 import * as helper from './helper';
 import { VTTerminalManager } from './terminal';
-import { vsPrint } from './dev';
-import { ETXTBSY } from 'constants';
 
 
 function readSSHConfig(sshConfigPath?: string) {
@@ -25,7 +23,7 @@ function readSSHConfig(sshConfigPath?: string) {
 // }
 
 async function configureSshConfig() {
-	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.configFile')
+	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile')
 	const cf = sshConfigFile || helper.join(homedir(), '.ssh', 'config');
 	// @ext:ms-vscode-remote.remote-ssh,ms-vscode-remote.remote-ssh-edit config file
 	// const pick = await vscode.window.showQuickPick([defutlSSHConfig, 'Settings']);
@@ -56,7 +54,7 @@ function initializeExtensionDirectory() {
 }
 
 function initializeSshConcfig() {
-	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.configFile')
+	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile')
 	if (sshConfigFile) {
 		if (existsSync(sshConfigFile)) {
 			ext.sshConfig = SSHConfig.parse(readSSHConfig(sshConfigFile));
@@ -98,7 +96,7 @@ function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
 				ext.vtHostHostpadProvider.refresh();
 			}
 			if (e.affectsConfiguration('sshConfig')) {
-				const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.configFile')
+				const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile')
 				ext.sshConfig = SSHConfig.parse(readSSHConfig(sshConfigFile));
 				await vscode.commands.executeCommand('vscode-sshclient.host.refresh');
 			}
@@ -140,10 +138,6 @@ export function activate(context: vscode.ExtensionContext) {
 	initializeHostConnectBarItem();
 
 	console.log('Congratulations, your extension "vscode-sshclient" is now active!');
-
-	ext.registerCommand('vscode-sshclient.helloWorld', () => {
-		vscode.window.showInformationMessage('Hello World from vscode-sshclient1!');
-	});
 
 	ext.registerCommand('vscode-sshclient.connect.refresh', (terminalName: string) => {
 		const terminals = vscode.window.terminals.filter(t => t.name === terminalName);

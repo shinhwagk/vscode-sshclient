@@ -2,7 +2,7 @@
 	"name": "vscode-sshclient",
 	"displayName": "vscode-sshclient",
 	"description": "a simple ssh client extension for vscode.",
-	"version": "0.0.16",
+	"version": "0.0.17",
 	"preview": true,
 	"icon": "icon.png",
 	"author": {
@@ -83,9 +83,9 @@
 						"default": "~/vscode-sshclient",
 						"description": "Location of workspace for hostpads with logs."
 					},
-					"vscode-sshclient.SSH.configFile": {
+					"vscode-sshclient.SSH.mirrorFile": {
 						"type": "string",
-						"description": "The absolute file path to a custom SSH config file."
+						"description": "The absolute file path to a mirror SSH config file."
 					}
 				}
 			}
