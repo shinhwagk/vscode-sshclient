@@ -1,1 +1,1 @@
-export const prefix = "VSHC@"
+export const prefix = "VSHC@";

@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { homedir } from 'os';
 import { join, basename } from 'path';
-import { writeFileSync, existsSync, readFileSync, fstat } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 
 import * as vscode from 'vscode';
 import { TreeItem, TreeDataProvider, Uri, EventEmitter, Event } from 'vscode';
@@ -23,7 +23,7 @@ function readSSHConfig(sshConfigPath?: string) {
 // }
 
 async function configureSshConfig() {
-	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile')
+	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile');
 	const cf = sshConfigFile || helper.join(homedir(), '.ssh', 'config');
 	// @ext:ms-vscode-remote.remote-ssh,ms-vscode-remote.remote-ssh-edit config file
 	// const pick = await vscode.window.showQuickPick([defutlSSHConfig, 'Settings']);
@@ -44,8 +44,8 @@ async function configureSshConfig() {
 }
 
 function initializeExtensionDirectory() {
-	const hdc = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('workspace')
-	const hd = hdc || path.join(homedir(), 'vscode-sshclient')
+	const hdc = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('workspace');
+	const hd = hdc || path.join(homedir(), 'vscode-sshclient');
 	const dpath = hd.startsWith('~/') ? join(homedir(), hd.substr(2)) : hd;
 	ext.vtHosthostpadDirectory = dpath;
 	mkdirpSync(dpath);
@@ -54,7 +54,7 @@ function initializeExtensionDirectory() {
 }
 
 function initializeSshConcfig() {
-	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile')
+	const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile');
 	if (sshConfigFile) {
 		if (existsSync(sshConfigFile)) {
 			ext.sshConfig = SSHConfig.parse(readSSHConfig(sshConfigFile));
@@ -96,7 +96,7 @@ function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
 				ext.vtHostHostpadProvider.refresh();
 			}
 			if (e.affectsConfiguration('sshConfig')) {
-				const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile')
+				const sshConfigFile = vscode.workspace.getConfiguration('vscode-sshclient').get<string>('SSH.mirrorFile');
 				ext.sshConfig = SSHConfig.parse(readSSHConfig(sshConfigFile));
 				await vscode.commands.executeCommand('vscode-sshclient.host.refresh');
 			}
@@ -108,10 +108,10 @@ function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
 	});
 
 	ext.registerCommand('vscode-sshclient.hostpad.sendTerminal', (hp: VTHostHostpad) => {
-		const at = vscode.window.activeTerminal
-		const fUrl = hp.resourceUri
+		const at = vscode.window.activeTerminal;
+		const fUrl = hp.resourceUri;
 		if (fUrl && at) {
-			at.sendText(readFileSync(fUrl.fsPath, { encoding: 'utf-8' }))
+			at.sendText(readFileSync(fUrl.fsPath, { encoding: 'utf-8' }));
 		}
 	});
 }
@@ -134,6 +134,31 @@ function initializeHostConnectBarItem() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+	// vscode.window.onDidOpenTerminal((t: vscode.Terminal) => {
+	// 	t.sendText("echo 'open'");
+
+	// });
+
+
+	// vscode.window.onDidCloseTerminal((t: vscode.Terminal) => {
+	// 	t.sendText("echo 'close'");
+	// 	vscode.window.showInformationMessage(t.name)
+
+	// });
+
+	// vscode.window.showInformationMessage('Hello World 2222!');
+	// context.subscriptions.push(vscode.commands.registerCommand('terminalTest.createEditorTerminal', () => {
+	// 	const v = vscode.window.createTerminal({ name: "test21", hideFromUser: false })
+	// 	// v.show(true)
+	// 	// vscode.commands.executeCommand('workbench.action.createTerminalEditor');
+	// 	// vscode.window.showInformationMessage('Hello World 2!');
+	// }));
+
+	// context.subscriptions.push(vscode.commands.registerCommand('terminalTest.moveEditorTerminal', () => {
+	// 	vscode.commands.executeCommand('workbench.action.createTerminalEditor');
+	// 	vscode.window.showInformationMessage('Hello World 2!');
+	// }));
+
 	initializeExtensionVariables(context);
 	initializeHostConnectBarItem();
 
@@ -208,9 +233,9 @@ export function activate(context: vscode.ExtensionContext) {
 	ext.registerCommand('vscode-sshclient.connect.rename', () => {
 		vscode.commands.executeCommand('workbench.action.terminal.renameWithArg', { name: 'sss' });
 	});
-	// ext.registerCommand('vscode-sshclient.host.refresh', () => {
-	// 	initializeSshConcfig();
-	// });
+	ext.registerCommand('vscode-sshclient.host.refresh', () => {
+		initializeSshConcfig();
+	});
 }
 
 export function deactivate() { }
@@ -262,9 +287,9 @@ class VTHost extends vscode.TreeItem {
 		light: path.join(__filename, '..', '..', 'resources', 'light', 'vm-default.svg'),
 		dark: path.join(__filename, '..', '..', 'resources', 'dark', 'vm-default.svg')
 	} : {
-			light: path.join(__filename, '..', '..', 'resources', 'light', 'vm-active.svg'),
-			dark: path.join(__filename, '..', '..', 'resources', 'dark', 'vm-active.svg')
-		};
+		light: path.join(__filename, '..', '..', 'resources', 'light', 'vm-active.svg'),
+		dark: path.join(__filename, '..', '..', 'resources', 'dark', 'vm-active.svg')
+	};
 	description = 'ip';//ext.sshConfig[1].config[0].value
 }
 

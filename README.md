@@ -7,3 +7,7 @@
 
 ## Features
 - group hosts
+
+## vscode command
+- workbench.action.createTerminalEditor
+- workbench.action.terminal.rename

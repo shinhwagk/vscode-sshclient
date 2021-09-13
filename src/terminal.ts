@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { vsPrint } from './dev';
+import { prefix } from './constants';
 
 
 // export async function createTerminal(host: string) {
@@ -15,15 +16,16 @@ export async function initTermainl(terminal: vscode.Terminal) {
 
 export class VTTerminalManager {
     prefix = "VSHC";
-    prefixRegex = new RegExp(`^${this.prefix}`);
-    prefixHostRegex = new RegExp(`^${this.prefix}@H@`);
-    prefixHostGroupRegex = new RegExp(`^${this.prefix}@G@`);
-    hostTerminalNameRegex = new RegExp(`^${this.prefix}@H@(\\w+) | (\\d+)`);
+    prefixRegex = new RegExp(`^${prefix}`);
+    prefixHostRegex = new RegExp(`^${prefix}@H@`);
+    prefixHostGroupRegex = new RegExp(`^${prefix}@G@`);
+    hostTerminalNameRegex = new RegExp(`^${prefix}@H@(\\w+) | (\\d+)`);
 
     private obtainTerminalName(kind: 'host' | 'group', host: string) {
         const k = kind === 'host' ? 'H' : 'G';
-        return `${this.prefix}@${k}@${host}`;
+        return `${prefix}@${k}@${host}`;
     }
+
     currentHost: string = "";
 
     createTerminal(host: string, kind?: 'host' | 'group') {
@@ -34,6 +36,7 @@ export class VTTerminalManager {
         t.show();
         return t;
     }
+
     query(host?: string): vscode.Terminal[] {
         if (host) {
             return vscode.window.terminals.filter(t => this.prefixRegex.test(t.name)).filter(t => t.name.includes(host));
@@ -66,7 +69,7 @@ export class VTTerminalManager {
     }
 
     checkHostConnectNumber(host: string): vscode.Terminal[] {
-        return vscode.window.terminals.filter(t => new RegExp(`^${this.prefix}@H@${host} \\|`).test(t.name));
+        return vscode.window.terminals.filter(t => new RegExp(`^${prefix}@H@${host} \\|`).test(t.name));
     }
 
     checkHostTerminalExistByNamePrefix(tname: string): boolean {
