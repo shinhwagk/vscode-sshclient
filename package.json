@@ -2,7 +2,7 @@
 	"name": "vscode-sshclient",
 	"displayName": "vscode-sshclient",
 	"description": "a simple ssh client extension for vscode.",
-	"version": "0.0.17",
+	"version": "0.0.18",
 	"preview": true,
 	"icon": "icon.png",
 	"author": {
@@ -111,8 +111,8 @@
 				}
 			},
 			{
-				"command": "workbench.action.terminal.runSelectedText",
-				"title": "runSelectedText to current terminal"
+				"command": "vscode-sshclient.terminal.runSelectedLines",
+				"title": "runSelectedLines to current terminal"
 			},
 			{
 				"command": "vscode-sshclient.connect.create-hostpad",
@@ -180,7 +180,7 @@
 			"editor/context": [
 				{
 					"group": "vscode-sshclient",
-					"command": "workbench.action.terminal.runSelectedText"
+					"command": "vscode-sshclient.terminal.runSelectedLines"
 				}
 			],
 			"view/title": [

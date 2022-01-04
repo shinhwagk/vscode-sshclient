@@ -11,6 +11,7 @@ const SSHConfig = require('ssh-config');
 
 import * as helper from './helper';
 import { VTTerminalManager } from './terminal';
+import { vsPrint } from './dev';
 
 
 function readSSHConfig(sshConfigPath?: string) {
@@ -112,6 +113,22 @@ function initializeExtensionVariables(ctx: vscode.ExtensionContext): void {
 		const fUrl = hp.resourceUri;
 		if (fUrl && at) {
 			at.sendText(readFileSync(fUrl.fsPath, { encoding: 'utf-8' }));
+		}
+	});
+	ext.registerCommand('vscode-sshclient.terminal.runSelectedLines', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (editor === undefined) { return; }
+		const document = editor.document;
+		const selection = editor.selection;
+		const sl = selection.start.line;
+		const el = selection.end.line;
+		// get line text in document.
+		const selectedLines = Array.from(Array(el - sl + 1).keys()).map(n => sl + n).map(l => document.lineAt(l).text);
+		// vsPrint(selectedLines.join("\n"))
+		// vsPrint(vscode.window.activeTerminal?.name || "1")
+		const terminal = vscode.window.activeTerminal;
+		if (terminal) {
+			terminal.sendText(selectedLines.join("\n"));
 		}
 	});
 }
